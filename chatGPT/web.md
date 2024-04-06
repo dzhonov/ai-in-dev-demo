@@ -1,13 +1,14 @@
 ### Запрос:
 
 Please create the HTML and CSS for a complete one page website, that has a navigation at the top of the website, a hero section, a categories section, an about section, and a footer in that order.
+
 ---
 
 ### Ответ:
 
 Certainly! Below is a simple example of HTML and CSS for a one-page website with a navigation bar, hero section, categories section, about section, and a footer.
 
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -116,6 +117,7 @@ Certainly! Below is a simple example of HTML and CSS for a one-page website with
 
 </body>
 </html>
+```
 
 ---
 
@@ -128,6 +130,7 @@ Using the previous response, can you re-create the categories section, so it has
 
 Certainly! I've modified the categories section to use boxes with background images. You can replace the placeholder images with your actual image URLs.
 
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -254,5 +257,6 @@ Certainly! I've modified the categories section to use boxes with background ima
 
 </body>
 </html>
+```
 
 Replace the placeholder images in the .category:nth-child(n) selectors with your actual image URLs. Adjust the width and height in the .category class to fit your design preferences.
