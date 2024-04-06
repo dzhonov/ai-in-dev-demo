@@ -247,6 +247,7 @@ private ClientRepository clientRepository;
 private OrderRepository orderRepository;
 private ProductRepository productRepository;
 private StockRepository stockRepository;
+
 ---
 
 ### Ответ:
@@ -364,6 +365,7 @@ Note that this is just an example and you may need to adjust the code to fit you
 ### Запрос:
 
 Provide the configuration for the database
+
 ---
 
 ### Ответ:

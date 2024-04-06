@@ -124,6 +124,7 @@ Certainly! Below is a simple example of HTML and CSS for a one-page website with
 ### Запрос:
 
 Using the previous response, can you re-create the categories section, so it has boxes with background images, instead of a unordered list?
+
 ---
 
 ### Ответ:
