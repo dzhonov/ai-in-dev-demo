@@ -151,58 +151,111 @@ public class MessageService {
 
 ### Ответ:
 
-To implement unit tests for the MessageService class, you can use JUnit and mockito. Here's an example of how you can do it:
 
 ```java
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-public class MessageServiceTest {
-    private MessageRepo messageRepo = Mockito.mock(MessageRepo.class);
-    private UserSubscriptionRepo userSubscriptionRepo = Mockito.mock(UserSubscriptionRepo.class);
-    private WsSender wsSender = Mockito.mock(WsSender.class);
+import com.testing.unittest.MessageService;
+import com.letscode.sarafan.domain.Message;
+import com.letscode.sarafan.domain.User;
+import com.letscode.sarafan.domain.UserSubscription;
+import com.letscode.sarafan.dto.EventType;
+import com.letscode.sarafan.dto.MessagePageDto;
+import com.letscode.sarafan.dto.ConfigDTO;
+import com.letscode.sarafan.service.MessageRepo;
+import com.letscode.sarafan.service.UserSubscriptionRepo;
+import com.letscode.sarafan.service.WsSender;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
+
+@ExtendWith(MockitoExtension.class)
+class MessageServiceTest {
+    @Mock
+    private MessageRepo messageRepo;
+
+    @Mock
+    private UserSubscriptionRepo userSubscriptionRepo;
+
+    @Mock
+    private WsSender wsSender;
+
+    @InjectMocks
+    private MessageService messageService;
+
     @Test
-    public void testDelete() {
+    void testDelete() {
         Message message = new Message();
-        MessageService messageService = new MessageService(messageRepo, userSubscriptionRepo, wsSender);
+        doNothing().when(messageRepo).delete(message);
+
         messageService.delete(message);
-        Mockito.verify(messageRepo).delete(message);
-        Mockito.verify(wsSender).accept(EventType.REMOVE, message);
+
+        verify(messageRepo, times(1)).delete(message);
+        verify(wsSender, times(1)).accept(EventType.REMOVE, message);
     }
+
     @Test
-    public void testUpdate() throws IOException {
+    void testUpdate() throws IOException {
         Message messageFromDb = new Message();
         Message message = new Message();
-        MessageService messageService = new MessageService(messageRepo, userSubscriptionRepo, wsSender);
-        messageService.update(messageFromDb, message);
-        Mockito.verify(messageRepo).save(messageFromDb);
-        Mockito.verify(wsSender).accept(EventType.UPDATE, message);
+        when(messageRepo.save(messageFromDb)).thenReturn(messageFromDb);
+        BiConsumer<EventType, Message> wsSender = (eventType, updatedMessage) -> {
+            assertEquals(EventType.UPDATE, eventType);
+            assertEquals(messageFromDb, updatedMessage);
+        };
+        messageService.setWsSender(wsSender);
+
+        Message updated = messageService.update(messageFromDb, message);
+
+        assertEquals(messageFromDb, updated);
     }
+
     @Test
-    public void testCreate() throws IOException {
+    void testCreate() throws IOException {
+        User user = new User();
         Message message = new Message();
-        User user = new User();
-        MessageService messageService = new MessageService(messageRepo, userSubscriptionRepo, wsSender);
-        messageService.create(message, user);
-        Mockito.verify(messageRepo).save(message);
-        Mockito.verify(wsSender).accept(EventType.CREATE, message);
+        Message updatedMessage = new Message();
+        when(messageRepo.save(message)).thenReturn(updatedMessage);
+        BiConsumer<EventType, Message> wsSender = (eventType, createdMessage) -> {
+            assertEquals(EventType.CREATE, eventType);
+            assertEquals(updatedMessage, createdMessage);
+        };
+        messageService.setWsSender(wsSender);
+
+        Message created = messageService.create(message, user);
+
+        assertEquals(updatedMessage, created);
     }
+
     @Test
-    public void testFindForUser() {
-        Pageable pageable = Mockito.mock(Pageable.class);
+    void testFindForUser() {
         User user = new User();
-        MessageService messageService = new MessageService(messageRepo, userSubscriptionRepo, wsSender);
+        Pageable pageable = mock(Pageable.class);
+        Page<Message> page = mock(Page.class);
+        List<Message> messages = new ArrayList<>();
+        messages.add(new Message());
+        when(userSubscriptionRepo.findBySubscriber(user)).thenReturn(new ArrayList<>());
+        when(messageRepo.findByAuthorIn(anyList(), eq(pageable))).thenReturn(page);
+        when(page.getContent()).thenReturn(messages);
+        when(page.getPageNumber()).thenReturn(0);
+        when(page.getTotalPages()).thenReturn(1);
+
         MessagePageDto messagePageDto = messageService.findForUser(pageable, user);
-        assertEquals(messagePageDto.getContent(), messageRepo.findByAuthorIn(userSubscriptionRepo.findBySubscriber(user).stream().filter(UserSubscription::isActive).map(UserSubscription::getChannel).collect(Collectors.toList()), pageable).getContent());
-        assertEquals(messagePageDto.getPageNumber(), pageable.getPageNumber());
-        assertEquals(messagePageDto.getTotalPages(), messageRepo.findByAuthorIn(userSubscriptionRepo.findBySubscriber(user).stream().filter(UserSubscription::isActive).map(UserSubscription::getChannel).collect(Collectors.toList()), pageable).getTotalPages());
+
+        assertEquals(messages, messagePageDto.getMessages());
+        assertEquals(0, messagePageDto.getPageNumber());
+        assertEquals(1, messagePageDto.getTotalPages());
     }
 }
 ```
-In this example, we're using JUnit and Mockito to test the `MessageService` class. We're mocking the `MessageRepo`, `UserSubscriptionRepo`, and `WsSender` classes, and then using them to test the `delete`, `update`, `create`, and `findForUser` methods.
-
-We're also using the `assertEquals` method to verify that the `MessagePageDto` object returned by the `findForUser` method has the correct content, page number, and total pages.
-
-Note that this is just one way to test the `MessageService` class, and you may need to modify it to fit your specific needs.
